@@ -68,14 +68,11 @@ class ImageCreate(BaseModel):
             else:
                 iv = item
             coords.append(iv)
-        x1, y1, x2, y2 = coords
-        if any(c < 0 for c in coords): raise ValueError("все координаты должны быть неотрицательными")
-        if x2 <= x1 or y2 <= y1: raise ValueError("должно выполняться x2 > x1 и y2 > y1")
         return coords
 
 
 class RunCreate(BaseModel):
-    experiment_id: int
+    experiment_id: Optional[int]
     run_date: Optional[datetime] = None
     accuracy: Optional[float] = None
     flagged: Optional[bool] = None

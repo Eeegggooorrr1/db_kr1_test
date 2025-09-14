@@ -1,112 +1,173 @@
 from datetime import date, datetime, UTC
-from typing import Optional, Any, List
+from functools import wraps
+from typing import Optional, Any, List, Tuple
 
-from sqlalchemy import select, desc
+from pydantic import ValidationError
+from sqlalchemy import select, desc, text, asc
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
 from db.models import Experiment, Run, Image, AttackTypeEnum
 from db.schemas import ExperimentCreate, RunCreate, ImageCreate
 from sqlalchemy.exc import IntegrityError
 
-def create_experiment(
-    name: str,
-    description: Optional[str] = None,
-) -> Experiment:
+def with_session(commit: bool = False):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with SessionLocal() as session:
+                kwargs['session'] = session
+                try:
+                    result = func(*args, **kwargs)
+                    if commit:
+                        session.commit()
+                        try:
+                            if isinstance(result, list):
+                                for r in result:
+                                    session.refresh(r)
+                            else:
+                                if result is not None:
+                                    session.refresh(result)
+                        except Exception:
+                            pass
+                    return result
+                except IntegrityError:
+                    session.rollback()
+                    raise
+                except Exception:
+                    session.rollback()
+                    raise
+        return wrapper
+    return decorator
 
+@with_session(commit=True)
+def create_experiment(name: str, description: Optional[str] = None, *, session):
     ExperimentCreate(name=name, description=description, created_date=datetime.now().date())
-    with SessionLocal() as session:
-        exp = Experiment(name=name, description=description, created_date=datetime.now().date())
-        session.add(exp)
-        try:
-            session.commit()
-            session.refresh(exp)
-            return exp
-        except IntegrityError:
-            session.rollback()
-            raise
+    exp = Experiment(name=name, description=description, created_date=datetime.now().date())
+    session.add(exp)
+    return exp
 
+@with_session(commit=True)
+def create_run(experiment_id: int, accuracy: Optional[float] = None, flagged: Optional[bool] = None, *, session):
+    if session.get(Experiment, experiment_id) is None:
+        raise ValueError(f"Experiment с id={experiment_id} не найден")
+    RunCreate(experiment_id=experiment_id, run_date=datetime.now(UTC), accuracy=accuracy, flagged=flagged)
+    run = Run(experiment_id=experiment_id, run_date=datetime.now(UTC), accuracy=accuracy, flagged=flagged)
+    session.add(run)
+    return run
 
-def create_run(
-    experiment_id: int,
-    accuracy: Optional[float] = None,
-    flagged: Optional[bool] = None,
-) -> Run:
-    with SessionLocal() as session:
-        if session.get(Experiment, experiment_id) is None:
-            raise ValueError(f"Experiment с id={experiment_id} не найден")
-
-        RunCreate(experiment_id=experiment_id, run_date=datetime.now(UTC), accuracy=accuracy, flagged=flagged)
-
-        run = Run(experiment_id=experiment_id, run_date=datetime.now(UTC), accuracy=accuracy, flagged=flagged)
-        session.add(run)
-        try:
-            session.commit()
-            session.refresh(run)
-            return run
-        except IntegrityError:
-            session.rollback()
-            raise
-
-
-def create_image(
-    session: Session,
-    *,
-    run_id: int,
-    file_path: str,
-    attack_type: Any,
-    original_name: Optional[str] = None,
-    added_date: Optional[datetime] = None,
-    coordinates: Optional[List[int]] = None,
-) -> Image:
-
+@with_session(commit=True)
+def create_image(run_id: int, file_path: str, attack_type: Any, original_name: Optional[str] = None, added_date: Optional[datetime] = None, coordinates: Optional[List[int]] = None, *, session):
     if session.get(Run, run_id) is None:
         raise ValueError(f"Run с id={run_id} не найден")
-    if ImageCreate is not None:
-        ImageCreate(run_id=run_id, file_path=file_path, original_name=original_name,
-                    attack_type=attack_type, added_date=added_date, coordinates=coordinates)
-
-    img = Image(
-        run_id=run_id,
-        file_path=file_path,
-        original_name=original_name,
-        attack_type=attack_type,
-        added_date=added_date,
-        coordinates=coordinates,
-    )
+    ImageCreate(run_id=run_id, file_path=file_path, original_name=original_name, attack_type=attack_type, added_date=added_date, coordinates=coordinates)
+    img = Image(run_id=run_id, file_path=file_path, original_name=original_name, attack_type=attack_type, added_date=added_date, coordinates=coordinates)
     session.add(img)
+    return img
+
+@with_session()
+def get_experiment_max_id(*, session):
+    result = session.execute(text("SELECT nextval('experiments_experiment_id_seq')"))
+    return result.scalar()
+
+@with_session()
+def get_run_max_id(*, session):
+    result = session.execute(text("SELECT nextval('runs_run_id_seq')"))
+    return result.scalar()
+
+@with_session()
+def get_all_experiments(*, session):
+    results = session.execute(select(Experiment)).scalars().all()
+    return results
+
+@with_session()
+def get_experiment_by_id(experiment_id, *, session):
+    experiment = session.query(Experiment).filter(Experiment.experiment_id == experiment_id).first()
+    return experiment
+
+@with_session(commit=True)
+def update_experiment(experiment_id, name, description, *, session):
     try:
-        session.commit()
-        session.refresh(img)
-        return img
-    except IntegrityError:
-        session.rollback()
-        raise
-def get_experiment_max_id():
-    with SessionLocal() as session:
-        return session.scalars(select(Experiment).order_by(desc(Experiment.experiment_id)).limit(1)).first().experiment_id
-def get_run_max_id():
-    with SessionLocal() as session:
-        return session.scalars(select(Run).order_by(desc(Run.run_id)).limit(1)).first().run_id
-# with SessionLocal() as session:
-#     try:
-#         # exp = create_experiment(session, name="exp_linked_1", description="пример последовательного добавления")
-#         # print("Created experiment id:", exp.experiment_id)
-#
-#         # run = create_run(session, experiment_id=1, run_date=datetime.utcnow(), accuracy=0.95, flagged=False)
-#         # print("Created run id:", run.run_id)
-#         #
-#         # attack_value = AttackTypeEnum.SOME_ATTACK if 'AttackTypeEnum' in globals() and hasattr(AttackTypeEnum, 'SOME_ATTACK') else "some_attack"
-#         #
-#         img = create_image(
-#             session,
-#             run_id=1,
-#             file_path="/data/images/img_002.png",
-#             attack_type=AttackTypeEnum.no_attack,
-#             original_name="img_002.png",
-#             added_date=datetime.now(UTC),
-#             coordinates=[1, 2, 3, 4],
-#         )
-#         # print("Created image id:", img.image_id)
-#     except Exception as e:
-#         print("Ошибка при создании связанных сущностей:", type(e), e)
-#
+        update_data = ExperimentCreate(name=name, description=description)
+    except ValidationError as e:
+        raise ValueError(f"некорректные изменения: {e}") from e
+    experiment = session.query(Experiment).filter(Experiment.experiment_id == experiment_id).first()
+    if experiment:
+        experiment.name = update_data.name
+        experiment.description = update_data.description
+    return experiment
+
+@with_session(commit=True)
+def delete_experiment(experiment_id, *, session):
+    experiment = session.query(Experiment).filter(Experiment.experiment_id == experiment_id).first()
+    if experiment:
+        session.delete(experiment)
+
+@with_session()
+def get_all_runs(*, session):
+    results = session.execute(select(Run)).scalars().all()
+    return results
+
+@with_session()
+def get_run_by_id(run_id, *, session):
+    run = session.query(Run).filter(Run.run_id == run_id).first()
+    return run
+
+@with_session(commit=True)
+def update_run(run_id, accuracy, flagged, *, session):
+    try:
+        update_data = RunCreate(accuracy=accuracy, flagged=flagged)
+    except ValidationError as e:
+        raise ValueError(f"некорректные изменения: {e}") from e
+    run = session.query(Run).filter(Run.run_id == run_id).first()
+    if run:
+        run.accuracy = update_data.accuracy
+        run.flagged = update_data.flagged
+    return run
+
+@with_session(commit=True)
+def delete_run(run_id, *, session):
+    run = session.query(Run).filter(Run.run_id == run_id).first()
+    if run:
+        session.delete(run)
+
+@with_session()
+def get_all_images(*, session):
+    images = session.query(Image).all()
+    return images
+
+@with_session()
+def get_all_images_filtered(filters, *, session):
+    query = session.query(Image)
+    if filters['attack_type']:
+        query = query.filter(Image.attack_type == filters['attack_type'])
+    if filters['sort_id'] == 'asc':
+        query = query.order_by(asc(Image.image_id))
+    elif filters['sort_id'] == 'desc':
+        query = query.order_by(desc(Image.image_id))
+    if filters['sort_run_id'] == 'asc':
+        query = query.order_by(asc(Image.run_id))
+    elif filters['sort_run_id'] == 'desc':
+        query = query.order_by(desc(Image.run_id))
+    if not filters['sort_id'] and not filters['sort_run_id']:
+        query = query.order_by(asc(Image.image_id))
+    images = query.all()
+    return images
+
+@with_session()
+def get_image_by_id(image_id, *, session):
+    image = session.query(Image).filter(Image.image_id == image_id).first()
+    return image
+
+@with_session(commit=True)
+def update_image(image_id, attack_type, *, session):
+    image = session.query(Image).filter(Image.image_id == image_id).first()
+    if image:
+        image.attack_type = attack_type
+    return image
+
+@with_session(commit=True)
+def delete_image(image_id, *, session):
+    image = session.query(Image).filter(Image.image_id == image_id).first()
+    if image:
+        session.delete(image)
+

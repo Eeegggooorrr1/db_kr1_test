@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtWidgets import QApplication
 
-from db.requests import get_experiment_max_id
+from db.requests import get_experiment_max_id, get_all_experiments
 from gui.main_window import MainWindow
 if __name__ == "__main__":
     app = QApplication(sys.argv)
