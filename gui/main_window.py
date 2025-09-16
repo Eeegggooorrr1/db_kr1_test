@@ -1,18 +1,9 @@
-import os
-from datetime import datetime
 
-from PySide6.QtCore import QRect, Qt
-from PySide6.QtGui import QPixmap, QPainter, QPen, QColor
 from PySide6.QtWidgets import (QMainWindow, QPushButton, QWidget, QVBoxLayout,
-                               QDialog, QLabel, QLineEdit, QTextEdit, QDialogButtonBox, QDoubleSpinBox, QCheckBox,
-                               QHBoxLayout, QFileDialog, QMessageBox, QComboBox, QTableWidget, QTableWidgetItem,
-                               QHeaderView)
-from typing import Optional
-
-from db.database import SessionLocal
-from db.models import AttackTypeEnum
-from db.requests import create_experiment, get_experiment_max_id, get_run_max_id, create_run, create_image
+                               )
 from gui.add_widget import ChoiceDialog
+from gui.connect_widget import ConnectionDialog
+from gui.logger_widget import get_qt_logger
 from gui.view_widget import ViewDialog
 
 
@@ -27,18 +18,56 @@ class MainWindow(QMainWindow):
 
         layout = QVBoxLayout(central_widget)
 
-        add_btn = QPushButton("Вставить данные")
-        add_btn.clicked.connect(self.open_dialog)
+        logger_btn = QPushButton("Показать/скрыть логгер")
+        logger_btn.clicked.connect(self.toggle_logger)
+        layout.addWidget(logger_btn)
 
-        view_btn = QPushButton("Посмотреть данные")
-        view_btn.clicked.connect(self.open_view)
+        self.connect_btn = QPushButton("Подключиться к БД")
+        self.connect_btn.clicked.connect(self.open_connection)
+        layout.addWidget(self.connect_btn)
 
-        layout.addWidget(add_btn)
-        layout.addWidget(view_btn)
+        self.add_btn = QPushButton("Вставить данные")
+        self.add_btn.clicked.connect(self.open_dialog)
+        layout.addWidget(self.add_btn)
+
+        self.view_btn = QPushButton("Посмотреть данные")
+        self.view_btn.clicked.connect(self.open_view)
+        layout.addWidget(self.view_btn)
+
+        self._update_ui_state()
+
+    def _update_ui_state(self):
+
+        ever_connected = False
+        try:
+            ever_connected = bool(getattr(ConnectionDialog, "_ever_connected", False))
+        except Exception:
+            ever_connected = False
+
+        self.add_btn.setEnabled(ever_connected)
+        self.view_btn.setEnabled(ever_connected)
+        self.connect_btn.setEnabled(True)
+
+    def open_connection(self):
+        dialog = ConnectionDialog(self)
+        dialog.connected.connect(self._on_db_connected)
+        dialog.exec()
+        self._update_ui_state()
+
+    def _on_db_connected(self, connection_info):
+        self._update_ui_state()
+
+    def toggle_logger(self):
+        logger = get_qt_logger()
+        if logger.isVisible():
+            logger.hide()
+        else:
+            logger.show()
 
     def open_dialog(self):
         dialog = ChoiceDialog(self)
         dialog.exec()
+
     def open_view(self):
-        self.dialog = ViewDialog(self)
-        self.dialog.show()
+        dialog = ViewDialog(self)
+        dialog.show()

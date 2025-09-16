@@ -1,5 +1,7 @@
+import logging
 from datetime import datetime, date, timezone
-from typing import Optional, List, Dict, Any
+from functools import wraps
+from typing import Optional, List, Dict, Any, Callable
 
 import math
 from pydantic import BaseModel, validator, Field, root_validator
@@ -7,7 +9,31 @@ from sqlalchemy.orm import validates
 from sqlalchemy.exc import IntegrityError
 
 from db.models import AttackTypeEnum
+from gui.logger_widget import get_qt_logger
 
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+
+def log_validation_errors(field_name: str = None):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(cls, v):
+            try:
+                return func(cls, v)
+            except Exception as e:
+                logger_window = get_qt_logger()
+
+                field = field_name or func.__name__.replace('validate_', '').replace('_non_empty', '')
+
+                logger = logging.getLogger(__name__)
+                logger.error(f"Validation error for field '{field}': {e}")
+                logger.error(f"Invalid value: {repr(v)[:100]}...")
+
+                raise
+
+        return wrapper
+    return decorator
 
 def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
@@ -18,8 +44,7 @@ def _ensure_dt_to_utc(dt: datetime) -> datetime:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
 
-AttackTypeT = AttackTypeEnum if AttackTypeEnum is not None else Any
-
+AttackTypeT = AttackTypeEnum
 
 class ImageCreate(BaseModel):
     run_id: int
@@ -30,19 +55,23 @@ class ImageCreate(BaseModel):
     coordinates: Optional[List[int]] = None
 
     @validator("file_path")
+    @log_validation_errors("name")
     def file_path_non_empty(cls, v: str) -> str:
         v2 = v.strip()
         if not v2: raise ValueError("file_path не может быть пустой строкой")
         if len(v2) > 500: raise ValueError("file_path длиннее 500 символов")
         return v2
 
+
     @validator("original_name")
+    @log_validation_errors("name")
     def original_name_trim(cls, v: Optional[str]) -> Optional[str]:
         if v is None: return None
         vv = v.strip()
         return vv if vv != "" else None
 
     @validator("added_date", pre=True, always=False)
+    @log_validation_errors("name")
     def added_date_not_in_future(cls, v: Optional[datetime]) -> Optional[datetime]:
         if v is None: return None
         if not isinstance(v, datetime): raise ValueError("added_date должен быть datetime")
@@ -51,6 +80,7 @@ class ImageCreate(BaseModel):
         return dt
 
     @validator("coordinates")
+    @log_validation_errors("name")
     def coordinates_format(cls, v: Optional[List[int]]) -> Optional[List[int]]:
         if v is None:
             return None
@@ -79,6 +109,7 @@ class RunCreate(BaseModel):
     images: Optional[List[ImageCreate]] = None
 
     @validator("run_date", pre=True, always=False)
+    @log_validation_errors("name")
     def run_date_not_future(cls, v: Optional[datetime]) -> Optional[datetime]:
         if v is None: return None
         if not isinstance(v, datetime): raise ValueError("run_date должен быть datetime")
@@ -87,6 +118,7 @@ class RunCreate(BaseModel):
         return dt
 
     @validator("accuracy")
+    @log_validation_errors("name")
     def accuracy_between_0_1(cls, v: Optional[float]) -> Optional[float]:
         if v is None: return None
         try:
@@ -96,6 +128,7 @@ class RunCreate(BaseModel):
         return fv
 
     @validator("flagged")
+    @log_validation_errors("name")
     def flagged_must_be_bool(cls, v: Optional[bool]) -> Optional[bool]:
         if v is None: return None
         if not isinstance(v, bool): raise ValueError("flagged должно быть булевым значением (True/False)")
@@ -107,7 +140,9 @@ class ExperimentCreate(BaseModel):
     created_date: Optional[date] = None
     runs: Optional[List[RunCreate]] = None
 
+
     @validator("name")
+    @log_validation_errors("name")
     def name_not_empty(cls, v: str) -> str:
         v2 = v.strip()
         if not v2: raise ValueError("name не может быть пустой строкой")
@@ -115,12 +150,14 @@ class ExperimentCreate(BaseModel):
         return v2
 
     @validator("description")
+    @log_validation_errors("name")
     def description_trim(cls, v: Optional[str]) -> Optional[str]:
         if v is None: return None
         vv = v.strip()
         return vv if vv != "" else None
 
     @validator("created_date", pre=True, always=False)
+    @log_validation_errors("name")
     def created_date_not_future(cls, v: Optional[date]) -> Optional[date]:
         if v is None:
             return None

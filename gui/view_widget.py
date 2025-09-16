@@ -349,6 +349,7 @@ class ImagesTableDialog(BaseTableDialog):
         self.filters = {
             'sort_id': None,
             'sort_run_id': None,
+            'sort_experiment_id': None,
             'attack_type': None
         }
         self.init_filters()
@@ -374,6 +375,14 @@ class ImagesTableDialog(BaseTableDialog):
         self.sort_run_id_combo.currentIndexChanged.connect(self.apply_filters)
         filter_layout.addWidget(self.sort_run_id_combo)
 
+        filter_layout.addWidget(QLabel("Сортировка ID эксперимента:"))
+        self.sort_experiment_id_combo = QComboBox()
+        self.sort_experiment_id_combo.addItem("Не сортировать", None)
+        self.sort_experiment_id_combo.addItem("По возрастанию", 'asc')
+        self.sort_experiment_id_combo.addItem("По убыванию", 'desc')
+        self.sort_experiment_id_combo.currentIndexChanged.connect(self.apply_filters)
+        filter_layout.addWidget(self.sort_experiment_id_combo)
+
         filter_layout.addWidget(QLabel("Тип атаки:"))
         self.attack_type_combo = QComboBox()
         self.attack_type_combo.addItem("Все типы", None)
@@ -392,6 +401,7 @@ class ImagesTableDialog(BaseTableDialog):
     def apply_filters(self):
         self.filters['sort_id'] = self.sort_id_combo.currentData()
         self.filters['sort_run_id'] = self.sort_run_id_combo.currentData()
+        self.filters['sort_experiment_id'] = self.sort_experiment_id_combo.currentData()
         self.filters['attack_type'] = self.attack_type_combo.currentData()
 
         self.load_data()
@@ -399,16 +409,18 @@ class ImagesTableDialog(BaseTableDialog):
     def reset_filters(self):
         self.sort_id_combo.setCurrentIndex(0)
         self.sort_run_id_combo.setCurrentIndex(0)
+        self.sort_experiment_id_combo.setCurrentIndex(0)
         self.attack_type_combo.setCurrentIndex(0)
         self.filters = {
             'sort_id': None,
             'sort_run_id': None,
+            'sort_experiment_id': None,
             'attack_type': None
         }
         self.load_data()
 
     def get_columns(self):
-        return ["ID", "ID прогона", "Путь к файлу", "Оригинальное имя", "Дата добавления", "Координаты", "Тип атаки",
+        return ["ID", "ID прогона", "ID эксперимента", "Путь к файлу", "Оригинальное имя", "Дата добавления", "Координаты", "Тип атаки",
                 "Действия"]
 
     def load_data(self):
@@ -422,33 +434,37 @@ class ImagesTableDialog(BaseTableDialog):
         for row, image in enumerate(result):
             id_item = QTableWidgetItem(str(image.image_id))
             run_id_item = QTableWidgetItem(str(image.run_id))
+            experiment_item = QTableWidgetItem(str(getattr(image, 'experiment_id', '')))
             path_item = QTableWidgetItem(image.file_path)
             name_item = QTableWidgetItem(image.original_name)
             date_item = QTableWidgetItem(str(image.added_date))
             coords_item = QTableWidgetItem(str(image.coordinates))
             attack_item = QTableWidgetItem(image.attack_type)
 
-            for item in [id_item, run_id_item, path_item, name_item, date_item, coords_item, attack_item]:
+            for item in [id_item, run_id_item, experiment_item, path_item, name_item, date_item, coords_item,
+                         attack_item]:
                 item.setFlags(Qt.ItemIsEnabled)
 
             self.table.setItem(row, 0, id_item)
             self.table.setItem(row, 1, run_id_item)
-            self.table.setItem(row, 2, path_item)
-            self.table.setItem(row, 3, name_item)
-            self.table.setItem(row, 4, date_item)
-            self.table.setItem(row, 5, coords_item)
-            self.table.setItem(row, 6, attack_item)
+            self.table.setItem(row, 2, experiment_item)
+            self.table.setItem(row, 3, path_item)
+            self.table.setItem(row, 4, name_item)
+            self.table.setItem(row, 5, date_item)
+            self.table.setItem(row, 6, coords_item)
+            self.table.setItem(row, 7, attack_item)
 
             self.add_edit_button(row, image.image_id)
 
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
 
     def edit_item(self, image_id):
         image = get_image_by_id(image_id)

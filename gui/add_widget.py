@@ -109,7 +109,6 @@ class ExperimentForm(QDialog):
             QMessageBox.critical(self, "Ошибка", f"Не удалось создать эксперимент: {str(e)}")
 
         super().accept()
-        print("Данные эксперимента:", self.get_data())
 
 
 class RunForm(QDialog):
@@ -163,7 +162,6 @@ class RunForm(QDialog):
             QMessageBox.critical(self, "Ошибка", f"Не удалось создать прогон: {str(e)}")
 
         super().accept()
-        print("Данные прогона:", self.get_data())
 
 
 
@@ -358,4 +356,3 @@ class ImageForm(QDialog):
             QMessageBox.critical(self, "Ошибка", f"Не удалось добавить изображение: {str(e)}")
 
         super().accept()
-        print("Данные изображения:", self.get_data())

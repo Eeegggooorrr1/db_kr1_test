@@ -1,12 +1,11 @@
-from datetime import date, datetime, UTC
+from datetime import datetime, UTC
 from functools import wraps
-from typing import Optional, Any, List, Tuple
+from typing import Optional, Any, List
 
 from pydantic import ValidationError
 from sqlalchemy import select, desc, text, asc
-from sqlalchemy.orm import Session
-from db.database import SessionLocal
-from db.models import Experiment, Run, Image, AttackTypeEnum
+import db.database
+from db.models import Experiment, Run, Image
 from db.schemas import ExperimentCreate, RunCreate, ImageCreate
 from sqlalchemy.exc import IntegrityError
 
@@ -14,7 +13,7 @@ def with_session(commit: bool = False):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            with SessionLocal() as session:
+            with db.database.SessionLocal() as session:
                 kwargs['session'] = session
                 try:
                     result = func(*args, **kwargs)
@@ -148,9 +147,23 @@ def get_all_images_filtered(filters, *, session):
         query = query.order_by(asc(Image.run_id))
     elif filters['sort_run_id'] == 'desc':
         query = query.order_by(desc(Image.run_id))
-    if not filters['sort_id'] and not filters['sort_run_id']:
+    if filters.get('sort_experiment_id') == 'asc':
+        query = query.join(Run, Image.run_id == Run.run_id).order_by(asc(Run.experiment_id))
+    elif filters.get('sort_experiment_id') == 'desc':
+        query = query.join(Run, Image.run_id == Run.run_id).order_by(desc(Run.experiment_id))
+
+    if not filters['sort_id'] and not filters['sort_run_id'] and not filters.get('sort_experiment_id'):
         query = query.order_by(asc(Image.image_id))
-    images = query.all()
+
+    rows = query.join(Run, Image.run_id == Run.run_id).add_columns(Run.experiment_id).all()
+
+    images = []
+    for row in rows:
+        image_obj = row[0]
+        experiment_id = row[1]
+        setattr(image_obj, 'experiment_id', experiment_id)
+        images.append(image_obj)
+
     return images
 
 @with_session()
