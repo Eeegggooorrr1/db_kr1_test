@@ -1,15 +1,10 @@
 import os
-from datetime import datetime
-
 from PySide6.QtCore import QRect, Qt, QPoint
 from PySide6.QtGui import QPixmap, QPainter, QPen, QColor
 from PySide6.QtWidgets import (QMainWindow, QPushButton, QWidget, QVBoxLayout,
                                QDialog, QLabel, QLineEdit, QTextEdit, QDialogButtonBox, QDoubleSpinBox, QCheckBox,
                                QHBoxLayout, QFileDialog, QMessageBox, QComboBox, QTableWidget, QTableWidgetItem,
                                QHeaderView)
-from typing import Optional
-
-from db.database import SessionLocal
 from db.models import AttackTypeEnum
 from db.requests import create_experiment, get_experiment_max_id, get_run_max_id, create_run, create_image
 
@@ -279,7 +274,6 @@ class ImageForm(QDialog):
             return
 
         if event.button() == Qt.MouseButton.LeftButton:
-            # Преобразуем координаты мыши к координатам исходного изображения
             scaled_pos = self.scale_point_to_original(event.pos())
             if scaled_pos is None:
                 return
@@ -309,23 +303,18 @@ class ImageForm(QDialog):
             self.update_image_display()
 
     def scale_point_to_original(self, point):
-        """Преобразует точку из координат виджета в координаты исходного изображения"""
         if not self.original_pixmap:
             return None
 
-        # Получаем текущий pixmap из label
         label_pixmap = self.image_label.pixmap()
         if not label_pixmap:
             return None
 
-        # Определяем область отображения изображения внутри label
         pixmap_rect = self.get_image_rect()
 
-        # Проверяем, находится ли точка внутри области изображения
         if not pixmap_rect.contains(point):
             return None
 
-        # Масштабируем координаты к исходному изображению
         scale_x = self.original_pixmap.width() / pixmap_rect.width()
         scale_y = self.original_pixmap.height() / pixmap_rect.height()
 
@@ -335,18 +324,15 @@ class ImageForm(QDialog):
         return QPoint(int(scaled_x), int(scaled_y))
 
     def get_image_rect(self):
-        """Возвращает прямоугольник с фактическими координатами изображения внутри label"""
         label_size = self.image_label.size()
         pixmap = self.image_label.pixmap()
 
         if not pixmap:
             return QRect()
 
-        # Вычисляем размер изображения с сохранением пропорций
         pixmap_size = pixmap.size()
         pixmap_size.scale(label_size, Qt.AspectRatioMode.KeepAspectRatio)
 
-        # Вычисляем позицию для центрирования изображения
         x = (label_size.width() - pixmap_size.width()) // 2
         y = (label_size.height() - pixmap_size.height()) // 2
 
@@ -365,7 +351,6 @@ class ImageForm(QDialog):
 
         painter.end()
 
-        # Масштабируем pixmap для отображения в label
         scaled_pixmap = pixmap.scaled(
             self.image_label.width(),
             self.image_label.height(),
