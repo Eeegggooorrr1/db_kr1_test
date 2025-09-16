@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from PySide6.QtCore import QRect, Qt
+from PySide6.QtCore import QRect, Qt, QPoint
 from PySide6.QtGui import QPixmap, QPainter, QPen, QColor
 from PySide6.QtWidgets import (QMainWindow, QPushButton, QWidget, QVBoxLayout,
                                QDialog, QLabel, QLineEdit, QTextEdit, QDialogButtonBox, QDoubleSpinBox, QCheckBox,
@@ -279,40 +279,99 @@ class ImageForm(QDialog):
             return
 
         if event.button() == Qt.MouseButton.LeftButton:
+            # Преобразуем координаты мыши к координатам исходного изображения
+            scaled_pos = self.scale_point_to_original(event.pos())
+            if scaled_pos is None:
+                return
+
             self.drawing = True
-            self.start_point = event.pos()
+            self.start_point = scaled_pos
             self.current_rect = QRect(self.start_point, self.start_point)
 
     def mouse_move_event(self, event):
         if self.drawing and self.start_point:
-            self.current_rect = QRect(self.start_point, event.pos()).normalized()
+            scaled_pos = self.scale_point_to_original(event.pos())
+            if scaled_pos is None:
+                return
+
+            self.current_rect = QRect(self.start_point, scaled_pos).normalized()
             self.update_image_display()
 
     def mouse_release_event(self, event):
         if self.drawing and self.start_point:
+            scaled_pos = self.scale_point_to_original(event.pos())
+            if scaled_pos is None:
+                return
+
             self.drawing = False
-            self.rect = QRect(self.start_point, event.pos()).normalized()
+            self.rect = QRect(self.start_point, scaled_pos).normalized()
             self.update_coordinates()
             self.update_image_display()
+
+    def scale_point_to_original(self, point):
+        """Преобразует точку из координат виджета в координаты исходного изображения"""
+        if not self.original_pixmap:
+            return None
+
+        # Получаем текущий pixmap из label
+        label_pixmap = self.image_label.pixmap()
+        if not label_pixmap:
+            return None
+
+        # Определяем область отображения изображения внутри label
+        pixmap_rect = self.get_image_rect()
+
+        # Проверяем, находится ли точка внутри области изображения
+        if not pixmap_rect.contains(point):
+            return None
+
+        # Масштабируем координаты к исходному изображению
+        scale_x = self.original_pixmap.width() / pixmap_rect.width()
+        scale_y = self.original_pixmap.height() / pixmap_rect.height()
+
+        scaled_x = (point.x() - pixmap_rect.x()) * scale_x
+        scaled_y = (point.y() - pixmap_rect.y()) * scale_y
+
+        return QPoint(int(scaled_x), int(scaled_y))
+
+    def get_image_rect(self):
+        """Возвращает прямоугольник с фактическими координатами изображения внутри label"""
+        label_size = self.image_label.size()
+        pixmap = self.image_label.pixmap()
+
+        if not pixmap:
+            return QRect()
+
+        # Вычисляем размер изображения с сохранением пропорций
+        pixmap_size = pixmap.size()
+        pixmap_size.scale(label_size, Qt.AspectRatioMode.KeepAspectRatio)
+
+        # Вычисляем позицию для центрирования изображения
+        x = (label_size.width() - pixmap_size.width()) // 2
+        y = (label_size.height() - pixmap_size.height()) // 2
+
+        return QRect(x, y, pixmap_size.width(), pixmap_size.height())
 
     def update_image_display(self):
         if not self.image_label.pixmap():
             return
 
         pixmap = self.original_pixmap.copy()
+        painter = QPainter(pixmap)
+        painter.setPen(QPen(QColor(255, 0, 0), 2))
 
+        if self.current_rect:
+            painter.drawRect(self.current_rect)
+
+        painter.end()
+
+        # Масштабируем pixmap для отображения в label
         scaled_pixmap = pixmap.scaled(
             self.image_label.width(),
             self.image_label.height(),
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation
         )
-
-        if self.current_rect:
-            painter = QPainter(scaled_pixmap)
-            painter.setPen(QPen(QColor(255, 0, 0), 2))
-            painter.drawRect(self.current_rect)
-            painter.end()
 
         self.image_label.setPixmap(scaled_pixmap)
 

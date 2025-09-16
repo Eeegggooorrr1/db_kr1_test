@@ -43,7 +43,6 @@ def create_experiment(name: str, description: Optional[str] = None, *, session):
     ExperimentCreate(name=name, description=description, created_date=datetime.now().date())
     exp = Experiment(name=name, description=description, created_date=datetime.now().date())
     session.add(exp)
-    return exp
 
 @with_session(commit=True)
 def create_run(experiment_id: int, accuracy: Optional[float] = None, flagged: Optional[bool] = None, *, session):
@@ -52,7 +51,6 @@ def create_run(experiment_id: int, accuracy: Optional[float] = None, flagged: Op
     RunCreate(experiment_id=experiment_id, run_date=datetime.now(UTC), accuracy=accuracy, flagged=flagged)
     run = Run(experiment_id=experiment_id, run_date=datetime.now(UTC), accuracy=accuracy, flagged=flagged)
     session.add(run)
-    return run
 
 @with_session(commit=True)
 def create_image(run_id: int, file_path: str, attack_type: Any, original_name: Optional[str] = None, added_date: Optional[datetime] = None, coordinates: Optional[List[int]] = None, *, session):
@@ -61,7 +59,6 @@ def create_image(run_id: int, file_path: str, attack_type: Any, original_name: O
     ImageCreate(run_id=run_id, file_path=file_path, original_name=original_name, attack_type=attack_type, added_date=added_date, coordinates=coordinates)
     img = Image(run_id=run_id, file_path=file_path, original_name=original_name, attack_type=attack_type, added_date=added_date, coordinates=coordinates)
     session.add(img)
-    return img
 
 @with_session()
 def get_experiment_max_id(*, session):
@@ -71,7 +68,7 @@ def get_experiment_max_id(*, session):
 @with_session()
 def get_run_max_id(*, session):
     result = session.execute(text("SELECT nextval('runs_run_id_seq')"))
-    return result.scalar()
+    return result.scalar() + 1
 
 @with_session()
 def get_all_experiments(*, session):
@@ -93,7 +90,6 @@ def update_experiment(experiment_id, name, description, *, session):
     if experiment:
         experiment.name = update_data.name
         experiment.description = update_data.description
-    return experiment
 
 @with_session(commit=True)
 def delete_experiment(experiment_id, *, session):
@@ -121,7 +117,6 @@ def update_run(run_id, accuracy, flagged, *, session):
     if run:
         run.accuracy = update_data.accuracy
         run.flagged = update_data.flagged
-    return run
 
 @with_session(commit=True)
 def delete_run(run_id, *, session):
@@ -176,7 +171,6 @@ def update_image(image_id, attack_type, *, session):
     image = session.query(Image).filter(Image.image_id == image_id).first()
     if image:
         image.attack_type = attack_type
-    return image
 
 @with_session(commit=True)
 def delete_image(image_id, *, session):

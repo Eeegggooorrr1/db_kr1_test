@@ -1,5 +1,4 @@
-import sys
-from typing import List, Tuple, Dict
+
 from PySide6.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QCheckBox,
     QPushButton, QTableWidget, QTableWidgetItem, QScrollArea, QLabel, QMessageBox, QSizePolicy, QDialog, QHeaderView,
