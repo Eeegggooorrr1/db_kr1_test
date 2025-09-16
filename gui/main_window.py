@@ -10,6 +10,7 @@ from gui.view_widget import ViewDialog
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.logger_window = None
         self.setWindowTitle("Главное окно")
         self.setFixedSize(300, 200)
 
@@ -18,7 +19,7 @@ class MainWindow(QMainWindow):
 
         layout = QVBoxLayout(central_widget)
 
-        logger_btn = QPushButton("Показать/скрыть логгер")
+        logger_btn = QPushButton("Показать логгер")
         logger_btn.clicked.connect(self.toggle_logger)
         layout.addWidget(logger_btn)
 
@@ -59,10 +60,7 @@ class MainWindow(QMainWindow):
 
     def toggle_logger(self):
         logger = get_qt_logger()
-        if logger.isVisible():
-            logger.hide()
-        else:
-            logger.show()
+        logger.show()
 
     def open_dialog(self):
         dialog = ChoiceDialog(self)

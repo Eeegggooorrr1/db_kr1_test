@@ -14,7 +14,7 @@ class LoggerWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Validation Logger")
+        self.setWindowTitle("Logger")
         self.setGeometry(100, 100, 800, 300)
 
         central_widget = QWidget()
@@ -22,12 +22,11 @@ class LoggerWindow(QMainWindow):
 
         layout = QVBoxLayout(central_widget)
 
-        self.status_label = QLabel("Логгер запущен. Ожидание ошибок валидации...")
+        self.status_label = QLabel("Логгер запущен.")
         layout.addWidget(self.status_label)
 
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
-        self.log_text_edit.setPlaceholderText("Здесь будут отображаться ошибки валидации...")
         layout.addWidget(self.log_text_edit)
 
         button_layout = QHBoxLayout()
@@ -49,11 +48,10 @@ class LoggerWindow(QMainWindow):
         startup_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         welcome_message = f"Логгер запущен {startup_time}"
         self.log_text_edit.append(welcome_message)
-        self.status_label.setText("Логгер активен. Ожидание ошибок")
+        self.status_label.setText("Логгер активен.")
 
     def append_log(self, message: str):
         self.log_text_edit.append(message)
-        self.status_label.setText("Обнаружены ошибки валидации")
         self.log_text_edit.verticalScrollBar().setValue(
             self.log_text_edit.verticalScrollBar().maximum()
         )
@@ -95,6 +93,7 @@ def initialize_qt_logger() -> LoggerWindow:
 
         _qt_handler = QtLoggerHandler(_logger_window)
         _qt_handler.setLevel(logging.ERROR)
+        _qt_handler.setLevel(logging.INFO)
 
         root_logger = logging.getLogger()
 
@@ -104,10 +103,12 @@ def initialize_qt_logger() -> LoggerWindow:
 
         root_logger.addHandler(_qt_handler)
         root_logger.setLevel(logging.ERROR)
+        _qt_handler.setLevel(logging.INFO)
 
         validation_logger = logging.getLogger('validation')
         validation_logger.addHandler(_qt_handler)
         validation_logger.setLevel(logging.ERROR)
+        _qt_handler.setLevel(logging.INFO)
 
         _logger_window.show()
         _logger_window.raise_()

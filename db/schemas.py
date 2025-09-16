@@ -55,7 +55,7 @@ class ImageCreate(BaseModel):
     coordinates: Optional[List[int]] = None
 
     @validator("file_path")
-    @log_validation_errors("name")
+    @log_validation_errors("file_path")
     def file_path_non_empty(cls, v: str) -> str:
         v2 = v.strip()
         if not v2: raise ValueError("file_path не может быть пустой строкой")
@@ -64,14 +64,14 @@ class ImageCreate(BaseModel):
 
 
     @validator("original_name")
-    @log_validation_errors("name")
+    @log_validation_errors("original_name")
     def original_name_trim(cls, v: Optional[str]) -> Optional[str]:
         if v is None: return None
         vv = v.strip()
         return vv if vv != "" else None
 
     @validator("added_date", pre=True, always=False)
-    @log_validation_errors("name")
+    @log_validation_errors("added_date")
     def added_date_not_in_future(cls, v: Optional[datetime]) -> Optional[datetime]:
         if v is None: return None
         if not isinstance(v, datetime): raise ValueError("added_date должен быть datetime")
@@ -80,7 +80,7 @@ class ImageCreate(BaseModel):
         return dt
 
     @validator("coordinates")
-    @log_validation_errors("name")
+    @log_validation_errors("coordinates")
     def coordinates_format(cls, v: Optional[List[int]]) -> Optional[List[int]]:
         if v is None:
             return None
@@ -106,10 +106,9 @@ class RunCreate(BaseModel):
     run_date: Optional[datetime] = None
     accuracy: Optional[float] = None
     flagged: Optional[bool] = None
-    images: Optional[List[ImageCreate]] = None
 
     @validator("run_date", pre=True, always=False)
-    @log_validation_errors("name")
+    @log_validation_errors("run_date")
     def run_date_not_future(cls, v: Optional[datetime]) -> Optional[datetime]:
         if v is None: return None
         if not isinstance(v, datetime): raise ValueError("run_date должен быть datetime")
@@ -118,7 +117,7 @@ class RunCreate(BaseModel):
         return dt
 
     @validator("accuracy")
-    @log_validation_errors("name")
+    @log_validation_errors("accuracy")
     def accuracy_between_0_1(cls, v: Optional[float]) -> Optional[float]:
         if v is None: return None
         try:
@@ -128,7 +127,7 @@ class RunCreate(BaseModel):
         return fv
 
     @validator("flagged")
-    @log_validation_errors("name")
+    @log_validation_errors("flagged")
     def flagged_must_be_bool(cls, v: Optional[bool]) -> Optional[bool]:
         if v is None: return None
         if not isinstance(v, bool): raise ValueError("flagged должно быть булевым значением (True/False)")
@@ -150,14 +149,14 @@ class ExperimentCreate(BaseModel):
         return v2
 
     @validator("description")
-    @log_validation_errors("name")
+    @log_validation_errors("description")
     def description_trim(cls, v: Optional[str]) -> Optional[str]:
         if v is None: return None
         vv = v.strip()
         return vv if vv != "" else None
 
     @validator("created_date", pre=True, always=False)
-    @log_validation_errors("name")
+    @log_validation_errors("created_date")
     def created_date_not_future(cls, v: Optional[date]) -> Optional[date]:
         if v is None:
             return None

@@ -114,7 +114,7 @@ def get_run_by_id(run_id, *, session):
 @with_session(commit=True)
 def update_run(run_id, accuracy, flagged, *, session):
     try:
-        update_data = RunCreate(accuracy=accuracy, flagged=flagged)
+        update_data = RunCreate(experiment_id = None, accuracy=accuracy, flagged=flagged, run_date=None)
     except ValidationError as e:
         raise ValueError(f"некорректные изменения: {e}") from e
     run = session.query(Run).filter(Run.run_id == run_id).first()
