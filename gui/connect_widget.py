@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt, Signal
 
 from db.config import Settings, settings
 from db.database import perform_connection, perform_recreate_tables
+from db.requests import insert_test_data
 
 
 class ConnectionDialog(QDialog):
@@ -156,7 +157,16 @@ class ConnectionDialog(QDialog):
 
             if result:
                 self.status_label.setText("Таблицы пересозданы успешно.")
-                QMessageBox.information(self, "Пересоздание таблиц", "Таблицы успешно пересозданы.")
+
+                msg_box = QMessageBox(self)
+                msg_box.setWindowTitle("Пересоздание таблиц")
+                msg_box.setText("Таблицы успешно пересозданы.")
+                msg_box.setIcon(QMessageBox.Information)
+                msg_box.addButton(QMessageBox.Ok)
+                btn_save = msg_box.addButton("внести тестовые данные", QMessageBox.ActionRole)
+                msg_box.exec()
+                if msg_box.clickedButton() == btn_save:
+                    insert_test_data()
             else:
                 self.status_label.setText("Не удалось пересоздать таблицы.")
                 QMessageBox.critical(self, "Пересоздание таблиц", "Пересоздание не выполнено.")

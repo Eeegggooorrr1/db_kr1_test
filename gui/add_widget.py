@@ -248,7 +248,7 @@ class ImageForm(QDialog):
     def select_image(self):
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Выберите изображение", "",
-            "Image Files (*.png *.jpg *.jpeg *.bmp *.gif)"
+            "Image Files (*.png *.jpg *.jpeg)"
         )
 
         if file_path:

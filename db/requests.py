@@ -1,13 +1,16 @@
-from datetime import datetime, UTC
+from datetime import datetime, UTC, date
 from functools import wraps
 from typing import Optional, Any, List
 
 from pydantic import ValidationError
 from sqlalchemy import select, desc, text, asc
 import db.database
-from db.models import Experiment, Run, Image
+from db.models import Experiment, Run, Image, AttackTypeEnum
 from db.schemas import ExperimentCreate, RunCreate, ImageCreate
 from sqlalchemy.exc import IntegrityError
+
+from test_data import experiments_data, runs_data, images_data
+
 
 def with_session(commit: bool = False):
     def decorator(func):
@@ -134,20 +137,13 @@ def get_all_images_filtered(filters, *, session):
     query = session.query(Image)
     if filters['attack_type']:
         query = query.filter(Image.attack_type == filters['attack_type'])
+    if filters['file_type']:
+        query = query.filter(Image.file_path.endswith(filters['file_type']))
     if filters['sort_id'] == 'asc':
         query = query.order_by(asc(Image.image_id))
     elif filters['sort_id'] == 'desc':
         query = query.order_by(desc(Image.image_id))
-    if filters['sort_run_id'] == 'asc':
-        query = query.order_by(asc(Image.run_id))
-    elif filters['sort_run_id'] == 'desc':
-        query = query.order_by(desc(Image.run_id))
-    if filters.get('sort_experiment_id') == 'asc':
-        query = query.join(Run, Image.run_id == Run.run_id).order_by(asc(Run.experiment_id))
-    elif filters.get('sort_experiment_id') == 'desc':
-        query = query.join(Run, Image.run_id == Run.run_id).order_by(desc(Run.experiment_id))
-
-    if not filters['sort_id'] and not filters['sort_run_id'] and not filters.get('sort_experiment_id'):
+    if not filters['sort_id']:
         query = query.order_by(asc(Image.image_id))
 
     rows = query.join(Run, Image.run_id == Run.run_id).add_columns(Run.experiment_id).all()
@@ -177,4 +173,14 @@ def delete_image(image_id, *, session):
     image = session.query(Image).filter(Image.image_id == image_id).first()
     if image:
         session.delete(image)
+
+
+def insert_test_data():
+    for exp in experiments_data:
+        create_experiment(**exp)
+    for rn in runs_data:
+        create_run(**rn)
+    for img in images_data:
+        create_image(**img)
+
 

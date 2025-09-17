@@ -347,8 +347,7 @@ class ImagesTableDialog(BaseTableDialog):
         self.setWindowTitle("Таблица изображений")
         self.filters = {
             'sort_id': None,
-            'sort_run_id': None,
-            'sort_experiment_id': None,
+            'file_type': None,
             'attack_type': None
         }
         self.init_filters()
@@ -366,21 +365,14 @@ class ImagesTableDialog(BaseTableDialog):
         self.sort_id_combo.currentIndexChanged.connect(self.apply_filters)
         filter_layout.addWidget(self.sort_id_combo)
 
-        filter_layout.addWidget(QLabel("Сортировка ID прогона:"))
-        self.sort_run_id_combo = QComboBox()
-        self.sort_run_id_combo.addItem("Не сортировать", None)
-        self.sort_run_id_combo.addItem("По возрастанию", 'asc')
-        self.sort_run_id_combo.addItem("По убыванию", 'desc')
-        self.sort_run_id_combo.currentIndexChanged.connect(self.apply_filters)
-        filter_layout.addWidget(self.sort_run_id_combo)
-
-        filter_layout.addWidget(QLabel("Сортировка ID эксперимента:"))
-        self.sort_experiment_id_combo = QComboBox()
-        self.sort_experiment_id_combo.addItem("Не сортировать", None)
-        self.sort_experiment_id_combo.addItem("По возрастанию", 'asc')
-        self.sort_experiment_id_combo.addItem("По убыванию", 'desc')
-        self.sort_experiment_id_combo.currentIndexChanged.connect(self.apply_filters)
-        filter_layout.addWidget(self.sort_experiment_id_combo)
+        filter_layout.addWidget(QLabel("Тип файла:"))
+        self.file_type_combo = QComboBox()
+        self.file_type_combo.addItem("Все типы", None)
+        self.file_type_combo.addItem(".png", ".png")
+        self.file_type_combo.addItem(".jpg", ".jpg")
+        self.file_type_combo.addItem(".jpeg", ".jpeg")
+        self.file_type_combo.currentIndexChanged.connect(self.apply_filters)
+        filter_layout.addWidget(self.file_type_combo)
 
         filter_layout.addWidget(QLabel("Тип атаки:"))
         self.attack_type_combo = QComboBox()
@@ -399,21 +391,17 @@ class ImagesTableDialog(BaseTableDialog):
 
     def apply_filters(self):
         self.filters['sort_id'] = self.sort_id_combo.currentData()
-        self.filters['sort_run_id'] = self.sort_run_id_combo.currentData()
-        self.filters['sort_experiment_id'] = self.sort_experiment_id_combo.currentData()
         self.filters['attack_type'] = self.attack_type_combo.currentData()
+        self.filters['file_type'] = self.file_type_combo.currentData()
 
         self.load_data()
 
     def reset_filters(self):
         self.sort_id_combo.setCurrentIndex(0)
-        self.sort_run_id_combo.setCurrentIndex(0)
-        self.sort_experiment_id_combo.setCurrentIndex(0)
         self.attack_type_combo.setCurrentIndex(0)
         self.filters = {
             'sort_id': None,
-            'sort_run_id': None,
-            'sort_experiment_id': None,
+            'file_type': None,
             'attack_type': None
         }
         self.load_data()
