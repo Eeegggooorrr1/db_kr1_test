@@ -10,17 +10,12 @@ class LogEmitter(QObject):
     log_signal = Signal(str)
 
 
-class LoggerWindow(QMainWindow):
+class LoggerWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Logger")
-        self.setGeometry(100, 100, 800, 300)
-
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-
-        layout = QVBoxLayout(central_widget)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
 
         self.status_label = QLabel("Логгер запущен.")
         layout.addWidget(self.status_label)
@@ -43,6 +38,25 @@ class LoggerWindow(QMainWindow):
         self.log_emitter.log_signal.connect(self.append_log)
 
         self.add_startup_message()
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #f5f5f5;
+            }
+            QPushButton {
+                background-color: #4a86e8;
+                color: white;
+                border: none;
+                padding: 8px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #3a76d8;
+            }
+            QPushButton:pressed {
+                background-color: #2a66c8;
+            }
+        """)
 
     def add_startup_message(self):
         startup_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -61,63 +75,52 @@ class LoggerWindow(QMainWindow):
         self.add_startup_message()
         self.status_label.setText("Логи очищены. Ожидание ошибок...")
 
-    def showEvent(self, event):
-        super().showEvent(event)
-        self.raise_()
-        self.activateWindow()
-
 
 class QtLoggerHandler(logging.Handler):
-    def __init__(self, log_window: LoggerWindow):
+    def __init__(self, log_widget: LoggerWidget):
         super().__init__()
-        self.log_window = log_window
+        self.log_widget = log_widget
         self.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
     def emit(self, record):
         try:
             log_message = self.format(record)
-            self.log_window.log_emitter.log_signal.emit(log_message)
+            self.log_widget.log_emitter.log_signal.emit(log_message)
         except Exception:
             pass
 
 
-_logger_window: Optional[LoggerWindow] = None
+_logger_widget: Optional[LoggerWidget] = None
 _qt_handler: Optional[QtLoggerHandler] = None
 
 
-def initialize_qt_logger() -> LoggerWindow:
-    global _logger_window, _qt_handler
+def initialize_qt_logger(parent_widget=None):
+    global _logger_widget, _qt_handler
 
-    if _logger_window is None:
-        _logger_window = LoggerWindow()
+    if _logger_widget is None:
+        _logger_widget = LoggerWidget(parent_widget)
 
-        _qt_handler = QtLoggerHandler(_logger_window)
-        _qt_handler.setLevel(logging.ERROR)
+        _qt_handler = QtLoggerHandler(_logger_widget)
         _qt_handler.setLevel(logging.INFO)
 
         root_logger = logging.getLogger()
-
         for handler in root_logger.handlers[:]:
             if isinstance(handler, QtLoggerHandler):
                 root_logger.removeHandler(handler)
 
         root_logger.addHandler(_qt_handler)
-        root_logger.setLevel(logging.ERROR)
-        _qt_handler.setLevel(logging.INFO)
+        root_logger.setLevel(logging.INFO)
 
         validation_logger = logging.getLogger('validation')
         validation_logger.addHandler(_qt_handler)
-        validation_logger.setLevel(logging.ERROR)
-        _qt_handler.setLevel(logging.INFO)
+        validation_logger.setLevel(logging.INFO)
 
-        _logger_window.show()
-        _logger_window.raise_()
-        _logger_window.activateWindow()
-
-    return _logger_window
+    return _logger_widget
 
 
-def get_qt_logger() -> LoggerWindow:
-    if _logger_window is None:
-        return initialize_qt_logger()
-    return _logger_window
+def get_qt_logger(parent_widget=None) -> LoggerWidget:
+    if _logger_widget is None:
+        return initialize_qt_logger(parent_widget)
+    return _logger_widget
+
+

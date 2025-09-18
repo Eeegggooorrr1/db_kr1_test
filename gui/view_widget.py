@@ -2,7 +2,7 @@
 from PySide6.QtWidgets import (
     QApplication, QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QCheckBox,
     QPushButton, QTableWidget, QTableWidgetItem, QScrollArea, QLabel, QMessageBox, QSizePolicy, QDialog, QHeaderView,
-    QAbstractItemView, QDateEdit, QTextEdit, QLineEdit, QDoubleSpinBox, QComboBox
+    QAbstractItemView, QDateEdit, QTextEdit, QLineEdit, QDoubleSpinBox, QComboBox, QMainWindow, QSplitter
 )
 from PySide6.QtCore import Qt
 
@@ -10,13 +10,115 @@ from db.models import AttackTypeEnum
 from db.requests import get_all_experiments, update_experiment, delete_experiment, get_experiment_by_id, get_all_runs, \
     delete_run, update_run, get_run_by_id, delete_image, update_image, get_all_images, get_image_by_id, \
     get_all_images_filtered
+from gui.logger_widget import initialize_qt_logger
+
+
+class MergeViewWindows(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("просмотр данных")
+        self.setGeometry(100, 100, 1200, 700)
+        self.setWindowModality(Qt.ApplicationModal)
+        self.setWindowFlags(self.windowFlags() | Qt.Dialog)
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+
+        main_layout = QHBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        splitter = QSplitter(Qt.Horizontal)
+        main_layout.addWidget(splitter)
+
+        left_widget = QWidget()
+        left_widget.setMinimumWidth(300)
+        left_widget.setMaximumWidth(400)
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(0)
+
+        self.view_dialog = ViewDialog()
+        self.view_dialog.setParent(self)
+        self.view_dialog.setWindowFlags(Qt.Widget)
+        self.view_dialog.open_form = self.open_form
+
+        self.view_dialog.setFixedHeight(int(self.height() / 3))
+
+        original_style = self.view_dialog.styleSheet()
+        self.view_dialog.setStyleSheet(f"""
+                   {original_style}
+                   QWidget {{
+                       border-right: 1px solid #d0d0d0;
+                   }}
+               """)
+
+        left_bottom_widget = QWidget()
+        left_bottom_widget.setStyleSheet("background-color: #e8e8e8; border-top: 1px solid #d0d0d0;")
+
+        left_layout.addWidget(self.view_dialog)
+        left_layout.addWidget(left_bottom_widget)
+
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(0)
+
+
+        self.form_container = QWidget()
+        self.form_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.form_layout = QVBoxLayout(self.form_container)
+        self.form_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.logger_widget = initialize_qt_logger(self)
+        self.logger_widget.setMinimumHeight(200)
+        self.logger_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.logger_widget.setStyleSheet("background-color: #e8e8e8; border-top: 1px solid #d0d0d0;")
+
+        right_splitter = QSplitter(Qt.Vertical)
+        right_splitter.addWidget(self.form_container)
+        right_splitter.addWidget(self.logger_widget)
+        right_splitter.setSizes([int(self.height() * 2 / 3), int(self.height() * 1 / 3)])
+
+        right_layout.addWidget(right_splitter)
+
+        splitter.addWidget(left_widget)
+        splitter.addWidget(right_widget)
+        splitter.setSizes([300, 900])
+        self.current_form = None
+
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.view_dialog.setFixedHeight(int(self.height() / 3))
+
+    def open_form(self, form_class):
+        if self.current_form:
+            self.current_form.deleteLater()
+
+        self.current_form = form_class(self.form_container)
+
+        self.current_form.setWindowFlags(Qt.Widget)
+
+        original_style = self.current_form.styleSheet()
+
+        self.current_form.setStyleSheet(f"""
+                   {original_style}
+                   QDialog {{
+                       background-color: white;
+                       border: none;
+                   }}
+               """)
+
+        self.current_form.setMinimumSize(400, 300)
+        self.current_form.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.form_layout.addWidget(self.current_form)
 
 
 class ViewDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Просмотр данных")
-        self.setFixedSize(350, 180)
 
         self.setStyleSheet("""
             QDialog {
@@ -39,32 +141,21 @@ class ViewDialog(QDialog):
         """)
 
         layout = QVBoxLayout()
-        layout.setSpacing(10)
-        layout.setContentsMargins(20, 20, 20, 20)
 
-        self.btn_experiments = QPushButton("Посмотреть эксперименты")
-        self.btn_runs = QPushButton("Посмотреть прогоны")
-        self.btn_images = QPushButton("Посмотреть изображения")
+        btn_experiment = QPushButton("посмотреть эксперимент")
+        btn_experiment.clicked.connect(lambda: self.open_form(ExperimentsTableDialog))
 
-        layout.addWidget(self.btn_experiments)
-        layout.addWidget(self.btn_runs)
-        layout.addWidget(self.btn_images)
+        btn_run = QPushButton("посмотреть прогон")
+        btn_run.clicked.connect(lambda: self.open_form(RunsTableDialog))
+
+        btn_image = QPushButton("посмотреть изображение")
+        btn_image.clicked.connect(lambda: self.open_form(ImagesTableDialog))
+
+        layout.addWidget(btn_experiment)
+        layout.addWidget(btn_run)
+        layout.addWidget(btn_image)
 
         self.setLayout(layout)
-
-        self.btn_experiments.clicked.connect(self.show_experiments)
-        self.btn_runs.clicked.connect(self.show_runs)
-        self.btn_images.clicked.connect(self.show_images)
-
-    def show_experiments(self):
-        self.exp_dialog = ExperimentsTableDialog(self)
-        self.exp_dialog.show()
-    def show_runs(self):
-        self.exp_dialog = RunsTableDialog(self)
-        self.exp_dialog.show()
-    def show_images(self):
-        self.exp_dialog = ImagesTableDialog(self)
-        self.exp_dialog.show()
 
 class BaseTableDialog(QDialog):
     def __init__(self, parent=None):

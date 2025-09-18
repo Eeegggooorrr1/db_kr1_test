@@ -1,10 +1,10 @@
-
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QMainWindow, QPushButton, QWidget, QVBoxLayout,
                                )
-from gui.add_widget import ChoiceDialog
+from gui.add_widget import ChoiceDialog, MergeAddWindows
 from gui.connect_widget import ConnectionDialog
 from gui.logger_widget import get_qt_logger
-from gui.view_widget import ViewDialog
+from gui.view_widget import ViewDialog, MergeViewWindows
 
 
 class MainWindow(QMainWindow):
@@ -13,7 +13,6 @@ class MainWindow(QMainWindow):
         self.logger_window = None
         self.setWindowTitle("Главное окно")
         self.setFixedSize(300, 200)
-
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
@@ -63,9 +62,11 @@ class MainWindow(QMainWindow):
         logger.show()
 
     def open_dialog(self):
-        dialog = ChoiceDialog(self)
+        dialog = MergeAddWindows()
+        dialog.show()
         dialog.exec()
 
     def open_view(self):
-        dialog = ViewDialog(self)
+        dialog = MergeViewWindows()
         dialog.show()
+        dialog.exec()
