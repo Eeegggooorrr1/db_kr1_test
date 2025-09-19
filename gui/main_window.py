@@ -64,9 +64,7 @@ class MainWindow(QMainWindow):
     def open_dialog(self):
         dialog = MergeAddWindows()
         dialog.show()
-        dialog.exec()
 
     def open_view(self):
         dialog = MergeViewWindows()
         dialog.show()
-        dialog.exec()
