@@ -260,7 +260,7 @@ class RunForm(QDialog):
 
     def get_data(self):
         return {
-            'experiment_id': int(self.experiment_id_edit.text()) if self.experiment_id_edit.text() else None,
+            'experiment_id': (self.experiment_id_edit.text()) if self.experiment_id_edit.text() else None,
             'accuracy': self.accuracy_spin.value() if self.accuracy_spin.value() else None,
             'flagged': self.verified_checkbox.isChecked() if self.verified_checkbox.isChecked() else None
         }
@@ -494,7 +494,7 @@ class ImageForm(QDialog):
 
     def get_data(self):
         return {
-            'run_id': int(self.run_id_edit.text()) if self.run_id_edit.text() else  None,
+            'run_id': self.run_id_edit.text() if self.run_id_edit.text() else  None,
             "image_path": self.image_path,
             "image_name": self.name_edit.text(),
             "center_x": int(self.center_x_edit.text()) if self.center_x_edit.text() else  None,
