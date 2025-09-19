@@ -65,13 +65,13 @@ def create_image(run_id: int, file_path: str, attack_type: Any, original_name: O
 
 @with_session()
 def get_experiment_max_id(*, session):
-    result = session.execute(text("SELECT nextval('experiments_experiment_id_seq')"))
+    result = session.execute(text("SELECT COALESCE(MAX(experiment_id), 0) FROM experiments"))
     return result.scalar()
 
 @with_session()
 def get_run_max_id(*, session):
-    result = session.execute(text("SELECT nextval('runs_run_id_seq')"))
-    return result.scalar() + 1
+    result = session.execute(text("SELECT COALESCE(MAX(run_id), 0) FROM runs"))
+    return result.scalar()
 
 @with_session()
 def get_all_experiments(*, session):

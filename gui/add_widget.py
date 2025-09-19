@@ -230,7 +230,7 @@ class RunForm(QDialog):
 
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Номер прогона:"))
-        self.number_edit = QLineEdit(str(get_run_max_id()))
+        self.number_edit = QLineEdit(str(get_run_max_id()+1))
         self.number_edit.setReadOnly(True)
         self.number_edit.setStyleSheet("background-color: #f0f0f0; color: #666666;")
         layout.addWidget(self.number_edit)
