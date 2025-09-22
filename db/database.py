@@ -15,11 +15,7 @@ def perform_connection(params):
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
             print("Подключение к базе данных успешно")
-
-
     except Exception as exc:
-        import traceback
-        traceback.print_exc()
         print("Ошибка при подключении к базе данных:", repr(exc))
 
         return False

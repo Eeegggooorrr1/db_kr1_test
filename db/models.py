@@ -52,4 +52,3 @@ class Image(Base):
     coordinates: Mapped[Optional[List[int]]] = mapped_column(ARRAY(Integer, dimensions=1), nullable=True)
 
     run: Mapped["Run"] = relationship("Run", back_populates="images")
-

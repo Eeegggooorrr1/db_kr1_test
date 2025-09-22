@@ -11,7 +11,7 @@ from db.requests import get_all_experiments, update_experiment, delete_experimen
     delete_run, update_run, get_run_by_id, delete_image, update_image, get_all_images, get_image_by_id, \
     get_all_images_filtered
 from gui.logger_widget import initialize_qt_logger
-
+ 
 
 class MergeViewWindows(QMainWindow):
     def __init__(self):

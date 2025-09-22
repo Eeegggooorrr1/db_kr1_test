@@ -17,9 +17,6 @@ class LoggerWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
 
-        self.status_label = QLabel("Логгер запущен.")
-        layout.addWidget(self.status_label)
-
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setReadOnly(True)
         layout.addWidget(self.log_text_edit)
@@ -62,7 +59,6 @@ class LoggerWidget(QWidget):
         startup_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         welcome_message = f"Логгер запущен {startup_time}"
         self.log_text_edit.append(welcome_message)
-        self.status_label.setText("Логгер активен.")
 
     def append_log(self, message: str):
         self.log_text_edit.append(message)
@@ -73,7 +69,6 @@ class LoggerWidget(QWidget):
     def clear_logs(self):
         self.log_text_edit.clear()
         self.add_startup_message()
-        self.status_label.setText("Логи очищены. Ожидание ошибок...")
 
 
 class QtLoggerHandler(logging.Handler):
@@ -118,7 +113,7 @@ def initialize_qt_logger(parent_widget=None):
     return _logger_widget
 
 
-def get_qt_logger(parent_widget=None) -> LoggerWidget:
+def get_qt_logger(parent_widget=None):
     if _logger_widget is None:
         return initialize_qt_logger(parent_widget)
     return _logger_widget

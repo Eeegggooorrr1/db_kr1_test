@@ -12,43 +12,27 @@ from sqlalchemy.exc import IntegrityError
 from test_data import experiments_data, runs_data, images_data
 
 
-def with_session(commit: bool = False):
+def with_session(commit = False):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             with db.database.SessionLocal() as session:
                 kwargs['session'] = session
-                try:
-                    result = func(*args, **kwargs)
-                    if commit:
-                        session.commit()
-                        try:
-                            if isinstance(result, list):
-                                for r in result:
-                                    session.refresh(r)
-                            else:
-                                if result is not None:
-                                    session.refresh(result)
-                        except Exception:
-                            pass
-                    return result
-                except IntegrityError:
-                    session.rollback()
-                    raise
-                except Exception:
-                    session.rollback()
-                    raise
+                result = func(*args, **kwargs)
+                if commit:
+                    session.commit()
+                return result
         return wrapper
     return decorator
 
 @with_session(commit=True)
-def create_experiment(name: str, description: Optional[str] = None, *, session):
+def create_experiment(name, description = None, *, session):
     ExperimentCreate(name=name, description=description, created_date=datetime.now().date())
     exp = Experiment(name=name, description=description, created_date=datetime.now().date())
     session.add(exp)
 
 @with_session(commit=True)
-def create_run(experiment_id: int, accuracy: Optional[float] = None, flagged: Optional[bool] = None, *, session):
+def create_run(experiment_id, accuracy = None, flagged = None, *, session):
     if session.get(Experiment, experiment_id) is None:
         raise ValueError(f"Experiment с id={experiment_id} не найден")
     RunCreate(experiment_id=experiment_id, run_date=datetime.now(UTC), accuracy=accuracy, flagged=flagged)
@@ -56,7 +40,7 @@ def create_run(experiment_id: int, accuracy: Optional[float] = None, flagged: Op
     session.add(run)
 
 @with_session(commit=True)
-def create_image(run_id: int, file_path: str, attack_type: Any, original_name: Optional[str] = None, added_date: Optional[datetime] = None, coordinates: Optional[List[int]] = None, *, session):
+def create_image(run_id, file_path, attack_type, original_name = None, added_date = None, coordinates = None, *, session):
     if session.get(Run, run_id) is None:
         raise ValueError(f"Run с id={run_id} не найден")
     ImageCreate(run_id=run_id, file_path=file_path, original_name=original_name, attack_type=attack_type, added_date=added_date, coordinates=coordinates)

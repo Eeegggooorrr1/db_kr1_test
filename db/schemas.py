@@ -35,22 +35,20 @@ def log_validation_errors(field_name: str = None):
         return wrapper
     return decorator
 
-def _now_utc() -> datetime:
+def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _ensure_dt_to_utc(dt: datetime) -> datetime:
+def dt_to_utc(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
-
-AttackTypeT = AttackTypeEnum
 
 class ImageCreate(BaseModel):
     run_id: int
     file_path: str = Field(..., max_length=500)
     original_name: Optional[str] = Field(None, max_length=255)
-    attack_type: AttackTypeT
+    attack_type: AttackTypeEnum
     added_date: Optional[datetime] = None
     coordinates: Optional[List[int]] = None
 
@@ -75,8 +73,8 @@ class ImageCreate(BaseModel):
     def added_date_not_in_future(cls, v: Optional[datetime]) -> Optional[datetime]:
         if v is None: return None
         if not isinstance(v, datetime): raise ValueError("added_date должен быть datetime")
-        dt = _ensure_dt_to_utc(v)
-        if dt > _now_utc(): raise ValueError("added_date не может быть в будущем")
+        dt = dt_to_utc(v)
+        if dt > now_utc(): raise ValueError("added_date не может быть в будущем")
         return dt
 
     @validator("coordinates")
@@ -112,8 +110,8 @@ class RunCreate(BaseModel):
     def run_date_not_future(cls, v: Optional[datetime]) -> Optional[datetime]:
         if v is None: return None
         if not isinstance(v, datetime): raise ValueError("run_date должен быть datetime")
-        dt = _ensure_dt_to_utc(v)
-        if dt > _now_utc(): raise ValueError("run_date не может быть в будущем")
+        dt = dt_to_utc(v)
+        if dt > now_utc(): raise ValueError("run_date не может быть в будущем")
         return dt
 
     @validator("accuracy")

@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (QMainWindow, QPushButton, QWidget, QVBoxLayout,
 from gui.add_widget import ChoiceDialog, MergeAddWindows
 from gui.connect_widget import ConnectionDialog
 from gui.logger_widget import get_qt_logger
+from gui.styles import styles
 from gui.view_widget import ViewDialog, MergeViewWindows
 
 
@@ -12,9 +13,11 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.logger_window = None
         self.setWindowTitle("Главное окно")
-        self.setFixedSize(300, 200)
+        self.setFixedSize(400, 300)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
+
+        self.setStyleSheet(styles)
 
         layout = QVBoxLayout(central_widget)
 

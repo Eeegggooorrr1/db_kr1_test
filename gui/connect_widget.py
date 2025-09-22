@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt, Signal
 from db.config import Settings, settings
 from db.database import perform_connection, perform_recreate_tables
 from db.requests import insert_test_data
+from gui.styles import styles
 
 
 class ConnectionDialog(QDialog):
@@ -29,25 +30,7 @@ class ConnectionDialog(QDialog):
         self._init_ui()
         self._connect_signals()
         self._update_ui_state()
-        # self.setStyleSheet("""
-        #             QDialog {
-        #                 background-color: #f5f5f5;
-        #             }
-        #             QPushButton {
-        #                 background-color: #4a86e8;
-        #                 color: white;
-        #                 border: none;
-        #                 padding: 8px;
-        #                 border-radius: 4px;
-        #                 font-weight: bold;
-        #             }
-        #             QPushButton:hover {
-        #                 background-color: #3a76d8;
-        #             }
-        #             QPushButton:pressed {
-        #                 background-color: #2a66c8;
-        #             }
-        #         """)
+        self.setStyleSheet(styles)
 
     def _init_ui(self):
         self.password_edit = QLineEdit()
