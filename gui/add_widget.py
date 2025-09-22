@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (QMainWindow, QPushButton, QWidget, QVBoxLayout,
 from db.models import AttackTypeEnum
 from db.requests import create_experiment, get_experiment_max_id, get_run_max_id, create_run, create_image
 from gui.logger_widget import initialize_qt_logger
+from gui.styles import styles
 
 
 class MergeAddWindows(QMainWindow):
@@ -19,6 +20,7 @@ class MergeAddWindows(QMainWindow):
         self.setWindowFlags(self.windowFlags() | Qt.Dialog)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
+        self.setStyleSheet(styles)
 
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -116,25 +118,7 @@ class ChoiceDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Выберите действие")
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #f5f5f5;
-            }
-            QPushButton {
-                background-color: #4a86e8;
-                color: white;
-                border: none;
-                padding: 8px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #3a76d8;
-            }
-            QPushButton:pressed {
-                background-color: #2a66c8;
-            }
-        """)
+        self.setStyleSheet(styles)
 
         layout = QVBoxLayout()
 
@@ -160,25 +144,7 @@ class ExperimentForm(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Создать эксперимент")
         self.setup_ui()
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #f5f5f5;
-            }
-            QPushButton {
-                background-color: #4a86e8;
-                color: white;
-                border: none;
-                padding: 8px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #3a76d8;
-            }
-            QPushButton:pressed {
-                background-color: #2a66c8;
-            }
-        """)
+        self.setStyleSheet(styles)
 
     def setup_ui(self):
         layout = QVBoxLayout()
@@ -227,6 +193,7 @@ class RunForm(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Создать прогон")
+        self.setStyleSheet(styles)
 
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Номер прогона:"))
@@ -286,6 +253,7 @@ class ImageForm(QDialog):
         self.start_point = None
         self.current_rect = None
         self.setup_ui()
+        self.setStyleSheet(styles)
 
     def setup_ui(self):
         main_layout = QVBoxLayout()
@@ -322,7 +290,6 @@ class ImageForm(QDialog):
         self.image_label = QLabel()
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image_label.setStyleSheet("border: 1px solid gray; background-color: #f0f0f0;")
-        self.image_label.setMinimumSize(400, 300)
         self.image_label.mousePressEvent = self.mouse_press_event
         self.image_label.mouseMoveEvent = self.mouse_move_event
         self.image_label.mouseReleaseEvent = self.mouse_release_event

@@ -5,6 +5,8 @@ from PySide6.QtCore import Qt, QObject, Signal
 from typing import Optional
 from datetime import datetime
 
+from gui.styles import styles
+
 
 class LogEmitter(QObject):
     log_signal = Signal(str)
@@ -35,25 +37,7 @@ class LoggerWidget(QWidget):
         self.log_emitter.log_signal.connect(self.append_log)
 
         self.add_startup_message()
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #f5f5f5;
-            }
-            QPushButton {
-                background-color: #4a86e8;
-                color: white;
-                border: none;
-                padding: 8px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #3a76d8;
-            }
-            QPushButton:pressed {
-                background-color: #2a66c8;
-            }
-        """)
+        self.setStyleSheet(styles)
 
     def add_startup_message(self):
         startup_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -85,17 +69,17 @@ class QtLoggerHandler(logging.Handler):
             pass
 
 
-_logger_widget: Optional[LoggerWidget] = None
+logger_widget: Optional[LoggerWidget] = None
 _qt_handler: Optional[QtLoggerHandler] = None
 
 
 def initialize_qt_logger(parent_widget=None):
-    global _logger_widget, _qt_handler
+    global logger_widget, _qt_handler
 
-    if _logger_widget is None:
-        _logger_widget = LoggerWidget(parent_widget)
+    if logger_widget is None:
+        logger_widget = LoggerWidget(parent_widget)
 
-        _qt_handler = QtLoggerHandler(_logger_widget)
+        _qt_handler = QtLoggerHandler(logger_widget)
         _qt_handler.setLevel(logging.INFO)
 
         root_logger = logging.getLogger()
@@ -110,12 +94,12 @@ def initialize_qt_logger(parent_widget=None):
         validation_logger.addHandler(_qt_handler)
         validation_logger.setLevel(logging.INFO)
 
-    return _logger_widget
+    return logger_widget
 
 
 def get_qt_logger(parent_widget=None):
-    if _logger_widget is None:
+    if logger_widget is None:
         return initialize_qt_logger(parent_widget)
-    return _logger_widget
+    return logger_widget
 
 

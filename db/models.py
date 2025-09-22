@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional, List
 
-from sqlalchemy import Integer, String, Date, Text, func, TIMESTAMP, ForeignKey, JSON, Float, Enum, ARRAY, Boolean
+from sqlalchemy import Integer, String, Date, Text, func, TIMESTAMP, ForeignKey, JSON, Float, Enum, ARRAY, Boolean, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 from db.database import Base
@@ -47,7 +47,7 @@ class Image(Base):
     original_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     attack_type: Mapped[AttackTypeEnum] = mapped_column(Enum(AttackTypeEnum, name="attack_type_enum"), nullable=False)
-    added_date: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+    added_date: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=text("DATE_TRUNC('second', NOW()::timestamp)"))
 
     coordinates: Mapped[Optional[List[int]]] = mapped_column(ARRAY(Integer, dimensions=1), nullable=True)
 

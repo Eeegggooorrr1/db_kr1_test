@@ -11,7 +11,8 @@ from db.requests import get_all_experiments, update_experiment, delete_experimen
     delete_run, update_run, get_run_by_id, delete_image, update_image, get_all_images, get_image_by_id, \
     get_all_images_filtered
 from gui.logger_widget import initialize_qt_logger
- 
+from gui.styles import styles
+
 
 class MergeViewWindows(QMainWindow):
     def __init__(self):
@@ -22,6 +23,7 @@ class MergeViewWindows(QMainWindow):
         self.setWindowFlags(self.windowFlags() | Qt.Dialog)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
+        self.setStyleSheet(styles)
 
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -120,25 +122,7 @@ class ViewDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Просмотр данных")
 
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #f5f5f5;
-            }
-            QPushButton {
-                background-color: #4a86e8;
-                color: white;
-                border: none;
-                padding: 8px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #3a76d8;
-            }
-            QPushButton:pressed {
-                background-color: #2a66c8;
-            }
-        """)
+        self.setStyleSheet(styles)
 
         layout = QVBoxLayout()
 
@@ -162,6 +146,7 @@ class BaseTableDialog(QDialog):
         super().__init__(parent)
         self.setMinimumSize(800, 500)
         self.init_ui()
+        self.setStyleSheet(styles)
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -188,7 +173,7 @@ class BaseEditDialog(QDialog):
     def __init__(self, item, parent=None):
         super().__init__(parent)
         self.item = item
-        self.setFixedSize(500, 300)
+        self.setFixedSize(600, 400)
         self.init_ui()
 
     def init_ui(self):
@@ -246,11 +231,12 @@ class ExperimentsTableDialog(BaseTableDialog):
 
             self.add_edit_button(row, exp.experiment_id)
 
+        self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
 
     def edit_item(self, experiment_id):
         experiment = get_experiment_by_id(experiment_id)
@@ -352,12 +338,13 @@ class RunsTableDialog(BaseTableDialog):
 
             self.add_edit_button(row, run.run_id)
 
+        self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Stretch)
 
     def edit_item(self, run_id):
         run = get_run_by_id(run_id)
@@ -534,6 +521,8 @@ class ImagesTableDialog(BaseTableDialog):
 
             self.add_edit_button(row, image.image_id)
 
+
+        self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
@@ -542,7 +531,7 @@ class ImagesTableDialog(BaseTableDialog):
         self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(8, QHeaderView.Stretch)
 
     def edit_item(self, image_id):
         image = get_image_by_id(image_id)
