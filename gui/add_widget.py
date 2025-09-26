@@ -7,8 +7,9 @@ from PySide6.QtWidgets import (QMainWindow, QPushButton, QWidget, QVBoxLayout,
                                QHeaderView, QSplitter, QSizePolicy)
 from db.models import AttackTypeEnum
 from db.requests import create_experiment, get_experiment_max_id, get_run_max_id, create_run, create_image
-from gui.logger_widget import initialize_qt_logger
+from gui.logger_widget import initialize_qt_logger, get_qt_logger_widget
 from gui.styles import styles
+
 
 
 class MergeAddWindows(QMainWindow):
@@ -68,10 +69,9 @@ class MergeAddWindows(QMainWindow):
         self.form_layout = QVBoxLayout(self.form_container)
         self.form_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.logger_widget = initialize_qt_logger(self)
+        self.logger_widget = get_qt_logger_widget(self)
         self.logger_widget.setMinimumHeight(200)
         self.logger_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        self.logger_widget.setStyleSheet("background-color: #e8e8e8; border-top: 1px solid #d0d0d0;")
 
         right_splitter = QSplitter(Qt.Vertical)
         right_splitter.addWidget(self.form_container)

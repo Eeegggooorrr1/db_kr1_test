@@ -3,7 +3,6 @@ styles = """
         background-color: #f5f5f5;
     }
 
-    /* Кнопки */
     QPushButton {
         background-color: #4a86e8;
         color: white;
@@ -38,7 +37,6 @@ styles = """
         selection-background-color: #e0e0e0;
         outline: 0;
     }
-    /* Таблицы */
     QTableView {
         background-color: white;
         alternate-background-color: #f8f8f8;

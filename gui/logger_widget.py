@@ -56,50 +56,65 @@ class LoggerWidget(QWidget):
 
 
 class QtLoggerHandler(logging.Handler):
-    def __init__(self, log_widget: LoggerWidget):
+    def __init__(self):
         super().__init__()
-        self.log_widget = log_widget
+        self.log_emitter = LogEmitter()
         self.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        self._log_buffer = []
+
+    def set_log_widget(self, log_widget: LoggerWidget):
+        self.log_widget = log_widget
+        self.log_emitter.log_signal.connect(self.log_widget.append_log)
+        for log_message in self._log_buffer:
+            self.log_emitter.log_signal.emit(log_message)
+        self._log_buffer.clear()
 
     def emit(self, record):
         try:
             log_message = self.format(record)
-            self.log_widget.log_emitter.log_signal.emit(log_message)
+            if hasattr(self, 'log_widget') and self.log_widget:
+                self.log_emitter.log_signal.emit(log_message)
+            else:
+                self._log_buffer.append(log_message)
         except Exception:
             pass
 
 
-logger_widget: Optional[LoggerWidget] = None
-_qt_handler: Optional[QtLoggerHandler] = None
+logger_widget = None
+_qt_handler = None
+def initialize_qt_logger():
+    global _qt_handler
 
-
-def initialize_qt_logger(parent_widget=None):
-    global logger_widget, _qt_handler
-
-    if logger_widget is None:
-        logger_widget = LoggerWidget(parent_widget)
-
-        _qt_handler = QtLoggerHandler(logger_widget)
+    if _qt_handler is None:
+        _qt_handler = QtLoggerHandler()
         _qt_handler.setLevel(logging.INFO)
-
         root_logger = logging.getLogger()
-        for handler in root_logger.handlers[:]:
-            if isinstance(handler, QtLoggerHandler):
-                root_logger.removeHandler(handler)
+
+        for logger in (root_logger, logging.getLogger('validation')):
+            for handler in logger.handlers[:]:
+                if isinstance(handler, QtLoggerHandler):
+                    logger.removeHandler(handler)
 
         root_logger.addHandler(_qt_handler)
         root_logger.setLevel(logging.INFO)
 
         validation_logger = logging.getLogger('validation')
-        validation_logger.addHandler(_qt_handler)
         validation_logger.setLevel(logging.INFO)
 
-    return logger_widget
+    return _qt_handler
 
 
-def get_qt_logger(parent_widget=None):
+def get_qt_logger_widget(parent_widget=None):
+    global logger_widget
+
     if logger_widget is None:
-        return initialize_qt_logger(parent_widget)
+        logger_widget = LoggerWidget(parent_widget)
+        if _qt_handler:
+            _qt_handler.set_log_widget(logger_widget)
+
     return logger_widget
 
+
+def setup_logging():
+    initialize_qt_logger()
 

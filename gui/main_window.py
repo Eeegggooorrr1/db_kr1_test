@@ -3,7 +3,6 @@ from PySide6.QtWidgets import (QMainWindow, QPushButton, QWidget, QVBoxLayout,
                                )
 from gui.add_widget import ChoiceDialog, MergeAddWindows
 from gui.connect_widget import ConnectionDialog
-from gui.logger_widget import get_qt_logger
 from gui.styles import styles
 from gui.view_widget import ViewDialog, MergeViewWindows
 
@@ -20,10 +19,6 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(styles)
 
         layout = QVBoxLayout(central_widget)
-
-        logger_btn = QPushButton("Показать логгер")
-        logger_btn.clicked.connect(self.toggle_logger)
-        layout.addWidget(logger_btn)
 
         self.connect_btn = QPushButton("Подключиться к БД")
         self.connect_btn.clicked.connect(self.open_connection)
@@ -59,10 +54,6 @@ class MainWindow(QMainWindow):
 
     def _on_db_connected(self, connection_info):
         self._update_ui_state()
-
-    def toggle_logger(self):
-        logger = get_qt_logger()
-        logger.show()
 
     def open_dialog(self):
         dialog = MergeAddWindows()

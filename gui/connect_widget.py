@@ -27,12 +27,12 @@ class ConnectionDialog(QDialog):
         self._connected = bool(self.__class__._ever_connected)
         self._connection_info = dict(self.__class__._last_connection_info)
 
-        self._init_ui()
-        self._connect_signals()
-        self._update_ui_state()
+        self.init_ui()
+        self.connect_signals()
+        self.update_ui_state()
         self.setStyleSheet(styles)
 
-    def _init_ui(self):
+    def init_ui(self):
         self.password_edit = QLineEdit()
         self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self.host_edit = QLineEdit()
@@ -67,12 +67,12 @@ class ConnectionDialog(QDialog):
         self.setLayout(main_layout)
         self.setFixedWidth(480)
 
-    def _connect_signals(self):
-        self.connect_btn.clicked.connect(self._on_connect_clicked)
-        self.recreate_btn.clicked.connect(self._on_recreate_clicked)
-        self.load_env_btn.clicked.connect(self._on_load_env_clicked)
+    def connect_signals(self):
+        self.connect_btn.clicked.connect(self.on_connect_clicked)
+        self.recreate_btn.clicked.connect(self.on_recreate_clicked)
+        self.load_env_btn.clicked.connect(self.on_load_env_clicked)
 
-    def _on_load_env_clicked(self):
+    def on_load_env_clicked(self):
 
 
         env_values = {
@@ -108,13 +108,15 @@ class ConnectionDialog(QDialog):
                 )
             )
 
-    def _on_connect_clicked(self):
+    def on_connect_clicked(self):
         if self._connected:
             return
 
         params = self.get_connection_params()
-
-        self._set_actions_enabled(False)
+        if '' in params.values():
+            QMessageBox.critical(self, "ошибка", 'не все поля заполнены')
+            return
+        self.set_actions_enabled(False)
         self.status_label.setText("Подключение...")
 
         try:
@@ -123,7 +125,7 @@ class ConnectionDialog(QDialog):
             else:
                 result = perform_connection(params)
         except Exception as exc:
-            QMessageBox.critical(self, "Ошибка при подключении", f"{type(exc).__name__}: {exc}")
+            #QMessageBox.critical(self, "Ошибка при подключении", f"{type(exc).__name__}: {exc}")
             result = False
 
         if result:
@@ -141,14 +143,14 @@ class ConnectionDialog(QDialog):
             self.status_label.setText("Не удалось подключиться.")
             QMessageBox.critical(self, "Подключение", "Подключение не удалось.")
 
-        self._set_actions_enabled(True)
+        self.set_actions_enabled(True)
 
-    def _on_recreate_clicked(self):
+    def on_recreate_clicked(self):
         if not self._connected:
             QMessageBox.warning(self, "Пересоздание таблиц", "Сначала подключитесь к базе данных.")
             return
 
-        self._set_actions_enabled(False)
+        self.set_actions_enabled(False)
         self.status_label.setText("Пересоздание таблиц...")
 
         try:
@@ -176,9 +178,9 @@ class ConnectionDialog(QDialog):
             self.status_label.setText("Ошибка при пересоздании таблиц.")
             QMessageBox.critical(self, "Ошибка при пересоздании таблиц", f"{type(exc).__name__}: {exc}")
         finally:
-            self._set_actions_enabled(True)
+            self.set_actions_enabled(True)
 
-    def _set_actions_enabled(self, enabled: bool):
+    def set_actions_enabled(self, enabled: bool):
         edits_enabled = enabled and (not self._connected)
 
         self.password_edit.setEnabled(edits_enabled)
@@ -191,7 +193,7 @@ class ConnectionDialog(QDialog):
         self.recreate_btn.setEnabled(enabled and self._connected)
         self.load_env_btn.setEnabled(edits_enabled)
 
-    def _update_ui_state(self):
+    def update_ui_state(self):
         if self._connected:
             self.status_label.setText("Подключено.")
         else:
@@ -201,7 +203,7 @@ class ConnectionDialog(QDialog):
                 self.status_label.setText("Подключено.")
             else:
                 self.status_label.setText("Не подключено.")
-        self._set_actions_enabled(True)
+        self.set_actions_enabled(True)
 
     def get_connection_params(self):
         return {

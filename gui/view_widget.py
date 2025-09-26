@@ -10,7 +10,7 @@ from db.models import AttackTypeEnum
 from db.requests import get_all_experiments, update_experiment, delete_experiment, get_experiment_by_id, get_all_runs, \
     delete_run, update_run, get_run_by_id, delete_image, update_image, get_all_images, get_image_by_id, \
     get_all_images_filtered
-from gui.logger_widget import initialize_qt_logger
+from gui.logger_widget import initialize_qt_logger, get_qt_logger_widget
 from gui.styles import styles
 
 
@@ -71,7 +71,7 @@ class MergeViewWindows(QMainWindow):
         self.form_layout = QVBoxLayout(self.form_container)
         self.form_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.logger_widget = initialize_qt_logger(self)
+        self.logger_widget = get_qt_logger_widget(self)
         self.logger_widget.setMinimumHeight(200)
         self.logger_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.logger_widget.setStyleSheet("background-color: #e8e8e8; border-top: 1px solid #d0d0d0;")
@@ -369,7 +369,7 @@ class EditRunDialog(BaseEditDialog):
         fields_layout.addWidget(self.id_label)
 
         fields_layout.addWidget(QLabel("ID эксперимента:"))
-        self.exp_id_label = QLabel(str(self.item.experiment_id))
+        self.exp_id_label = QLineEdit(str(self.item.experiment_id))
         fields_layout.addWidget(self.exp_id_label)
 
         fields_layout.addWidget(QLabel("Время запуска:"))
@@ -393,11 +393,12 @@ class EditRunDialog(BaseEditDialog):
         main_layout.insertLayout(0, fields_layout)
 
     def save_changes(self):
+        experiment_id = self.exp_id_label.text()
         accuracy = self.accuracy_spin.value()
         flagged = self.verified_checkbox.isChecked()
 
         try:
-            update_run(self.item.run_id, accuracy, flagged)
+            update_run(experiment_id, self.item.run_id, accuracy, flagged)
             self.accept()
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось обновить прогон: {str(e)}")
@@ -477,6 +478,7 @@ class ImagesTableDialog(BaseTableDialog):
     def reset_filters(self):
         self.sort_id_combo.setCurrentIndex(0)
         self.attack_type_combo.setCurrentIndex(0)
+        self.file_type_combo.setCurrentIndex(0)
         self.filters = {
             'sort_id': None,
             'file_type': None,
@@ -485,7 +487,7 @@ class ImagesTableDialog(BaseTableDialog):
         self.load_data()
 
     def get_columns(self):
-        return ["ID", "ID прогона", "ID эксперимента", "Путь к файлу", "Оригинальное имя", "Дата добавления", "Координаты", "Тип атаки",
+        return ["ID", "ID прогона", "ID эксперимента", "Путь к файлу", "Имя", "Дата добавления", "Координаты", "Тип атаки",
                 "Действия"]
 
     def load_data(self):
@@ -561,14 +563,14 @@ class EditImageDialog(BaseEditDialog):
         fields_layout.addWidget(self.id_label)
 
         fields_layout.addWidget(QLabel("ID прогона:"))
-        self.run_id_label = QLabel(str(self.item.run_id))
+        self.run_id_label = QLineEdit(str(self.item.run_id))
         fields_layout.addWidget(self.run_id_label)
 
         fields_layout.addWidget(QLabel("Путь к файлу:"))
         self.path_label = QLabel(self.item.file_path)
         fields_layout.addWidget(self.path_label)
 
-        fields_layout.addWidget(QLabel("Оригинальное имя:"))
+        fields_layout.addWidget(QLabel("Имя:"))
         self.name_label = QLabel(self.item.original_name)
         fields_layout.addWidget(self.name_label)
 
@@ -593,9 +595,9 @@ class EditImageDialog(BaseEditDialog):
 
     def save_changes(self):
         attack_type = self.attack_type_combo.currentData()
-
+        run_id = self.run_id_label.text()
         try:
-            update_image(self.item.image_id, attack_type)
+            update_image(self.item.image_id, run_id, attack_type)
             self.accept()
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Не удалось обновить изображение: {str(e)}")
@@ -604,7 +606,7 @@ class EditImageDialog(BaseEditDialog):
         reply = QMessageBox.question(
             self,
             "Подтверждение удаления",
-            "Вы уверены, что хотите удалить это изображение?",
+            "Вы уверены, что хотите удалить изображение?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
