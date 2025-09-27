@@ -47,7 +47,6 @@ def log_validation_errors(field_name: str = None):
 def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
-
 def dt_to_utc(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)

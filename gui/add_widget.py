@@ -69,6 +69,18 @@ class MergeAddWindows(QMainWindow):
         self.form_layout = QVBoxLayout(self.form_container)
         self.form_layout.setContentsMargins(0, 0, 0, 0)
 
+        self.placeholder_label = QLabel("ВЫБЕРИТЕ ОПЦИЮ")
+        self.placeholder_label.setAlignment(Qt.AlignCenter)
+        self.placeholder_label.setStyleSheet("""
+            QLabel {
+                font-size: 48px;
+                font-weight: bold;
+                color: #cccccc;
+                background-color: white;
+            }
+        """)
+        self.form_layout.addWidget(self.placeholder_label)
+
         self.logger_widget = get_qt_logger_widget(self)
         self.logger_widget.setMinimumHeight(200)
         self.logger_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -94,6 +106,7 @@ class MergeAddWindows(QMainWindow):
         if self.current_form:
             self.current_form.deleteLater()
 
+        self.placeholder_label.hide()
         self.current_form = form_class(self.form_container)
 
         self.current_form.setWindowFlags(Qt.Widget)

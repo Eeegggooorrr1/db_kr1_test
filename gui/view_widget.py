@@ -70,11 +70,22 @@ class MergeViewWindows(QMainWindow):
         self.form_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.form_layout = QVBoxLayout(self.form_container)
         self.form_layout.setContentsMargins(0, 0, 0, 0)
+        self.placeholder_label = QLabel("ВЫБЕРИТЕ ОПЦИЮ")
+        self.placeholder_label.setAlignment(Qt.AlignCenter)
+        self.placeholder_label.setStyleSheet("""
+                    QLabel {
+                        font-size: 48px;
+                        font-weight: bold;
+                        color: #cccccc;
+                        background-color: white;
+                    }
+                """)
+        self.form_layout.addWidget(self.placeholder_label)
 
         self.logger_widget = get_qt_logger_widget(self)
         self.logger_widget.setMinimumHeight(200)
         self.logger_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        self.logger_widget.setStyleSheet("background-color: #e8e8e8; border-top: 1px solid #d0d0d0;")
+        #self.logger_widget.setStyleSheet("background-color: #e8e8e8; border-top: 1px solid #d0d0d0;")
 
         right_splitter = QSplitter(Qt.Vertical)
         right_splitter.addWidget(self.form_container)
@@ -95,8 +106,10 @@ class MergeViewWindows(QMainWindow):
 
     def open_form(self, form_class):
         if self.current_form:
+
             self.current_form.deleteLater()
 
+        self.placeholder_label.hide()
         self.current_form = form_class(self.form_container)
 
         self.current_form.setWindowFlags(Qt.Widget)
